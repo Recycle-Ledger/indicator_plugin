@@ -18,24 +18,20 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final _indicatorPlugin = IndicatorPlugin();
   double weight = 0;
+  bool isConnect = false;
 
   @override
   void initState() {
     super.initState();
-    initPlatformState();
   }
 
   Future<void> getPermission() async {
     await Permission.bluetoothConnect.request();
     await Permission.bluetoothScan.request();
+    await Permission.locationWhenInUse.request();
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    if (!mounted) return;
-
-    await getPermission();
-
+  Future<void> connectIndicator() async {
     _indicatorPlugin.startScan().listen((event) {
       setState(() {
         weight = event;
@@ -48,12 +44,36 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Plugin example app'),
+          title: const Text('Indicator plugin example'),
         ),
         body: Center(
-          child: Text(
-            'weight : $weight KG',
-            style: Theme.of(context).textTheme.headlineLarge,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'weight : $weight KG',
+                style: Theme.of(context).textTheme.headlineLarge,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  if (isConnect) {
+                    setState(() {
+                      isConnect = !isConnect;
+                      weight = 0;
+                    });
+                    _indicatorPlugin.dispose();
+                  } else {
+                    setState(() {
+                      isConnect = !isConnect;
+                    });
+                    await getPermission();
+                    await connectIndicator();
+                  }
+                },
+                child: Text(isConnect ? '해제' : '연결'),
+              ),
+            ],
           ),
         ),
       ),
