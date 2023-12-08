@@ -79,7 +79,7 @@ class IndicatorPlugin : FlutterPlugin, MethodCallHandler {
     private fun dispose() {
         Log.d(TAG, "dispose")
         eventSink = null
-        inputStream.close();
+        inputStream.close()
         bluetoothSocket?.close()
         if (discoveryReceiver.isOrderedBroadcast) {
             applicationContext.unregisterReceiver(discoveryReceiver)
@@ -121,7 +121,6 @@ class IndicatorPlugin : FlutterPlugin, MethodCallHandler {
 
     private fun getPairedDevice(): BluetoothDevice? {
         val pairedDevices: Set<BluetoothDevice> = bluetoothAdapter.bondedDevices
-
         pairedDevices.forEach { device ->
             if (device.name.startsWith("WCS")) {
                 return device
@@ -194,7 +193,15 @@ class IndicatorPlugin : FlutterPlugin, MethodCallHandler {
     private fun connectBluetoothSocket(device: BluetoothDevice) {
         Log.d(TAG, "connectBluetoothSocket()")
         bluetoothSocket = device.createRfcommSocketToServiceRecord(uuid)
-        bluetoothSocket?.connect()
+        bluetoothAdapter.cancelDiscovery()
+
+        try {
+            bluetoothSocket?.connect()
+        } catch (e: IOException) {
+            Log.d(TAG, "Socket error, reconnect...")
+            connectBluetoothSocket(device)
+            return
+        }
         inputStream = bluetoothSocket!!.inputStream
         if (bluetoothSocket!!.isConnected) {
             startReadingData()
