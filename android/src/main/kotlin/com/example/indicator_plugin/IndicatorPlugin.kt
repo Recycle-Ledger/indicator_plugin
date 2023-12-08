@@ -77,7 +77,9 @@ class IndicatorPlugin : FlutterPlugin, MethodCallHandler {
     }
 
     private fun dispose() {
+        Log.d(TAG, "dispose")
         eventSink = null
+        inputStream.close();
         bluetoothSocket?.close()
         if (discoveryReceiver.isOrderedBroadcast) {
             applicationContext.unregisterReceiver(discoveryReceiver)
